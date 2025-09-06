@@ -379,8 +379,8 @@ function generateQuestion() {
         word: correctWord.word,
         phonetic: correctWord.phonetic,
         correctAnswer: correctWord.definition,
-        options: shuffledOptions.map(word => word.definition),
-        correctIndex: shuffledOptions.findIndex(word => word.id === correctWord.id),
+        options: shuffledOptions.map(w => w.definition),
+        correctIndex: shuffledOptions.findIndex(w => w.id === correctWord.id),
         wordId: correctWord.id
     };
 }
@@ -421,8 +421,8 @@ function generateMistakeQuestions(mistakeType) {
                 word: word.word,
                 phonetic: word.phonetic,
                 correctAnswer: word.definition,
-                options: shuffledOptions.map(word => word.definition),
-                correctIndex: shuffledOptions.findIndex(word => word.id === word.id),
+                options: shuffledOptions.map(w => w.definition),
+                correctIndex: shuffledOptions.findIndex(w => w.id === word.id),
                 wordId: word.id
             });
         }
