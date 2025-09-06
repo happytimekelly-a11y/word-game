@@ -408,10 +408,8 @@ function generateMistakeQuestions(mistakeType) {
         mistakes = gameController.getHistoricalMistakes();
     }
     
-    // 如果错题不足，用普通题目补充
-    const mistakeCount = Math.min(mistakes.length, GAME_CONFIG.QUESTIONS_PER_SESSION);
-    
-    for (let i = 0; i < mistakeCount; i++) {
+    // 只使用实际的错题，不补充其他题目
+    for (let i = 0; i < mistakes.length; i++) {
         const mistake = mistakes[i];
         const word = WORD_DATABASE.find(w => w.id === mistake.wordId);
         if (word) {
@@ -430,11 +428,6 @@ function generateMistakeQuestions(mistakeType) {
         }
     }
     
-    // 如果错题不足，用普通题目补充
-    for (let i = questions.length; i < GAME_CONFIG.QUESTIONS_PER_SESSION; i++) {
-        questions.push(generateQuestion());
-    }
-    
     return questions;
 }
 
@@ -451,9 +444,10 @@ function updateHearts() {
 }
 
 function updateProgress() {
-    const progress = (gameController.gameState.currentQuestionIndex / GAME_CONFIG.QUESTIONS_PER_SESSION) * 100;
+    const totalQuestions = gameController.gameState.totalQuestions || GAME_CONFIG.QUESTIONS_PER_SESSION;
+    const progress = (gameController.gameState.currentQuestionIndex / totalQuestions) * 100;
     elements.progressFill.style.width = `${progress}%`;
-    elements.progressText.textContent = `${gameController.gameState.currentQuestionIndex}/${GAME_CONFIG.QUESTIONS_PER_SESSION}`;
+    elements.progressText.textContent = `${gameController.gameState.currentQuestionIndex}/${totalQuestions}`;
 }
 
 function displayQuestion() {
@@ -543,7 +537,8 @@ function nextQuestion() {
     gameController.gameState.currentQuestionIndex++;
     gameController.gameState.isAnswering = false;
     
-    if (gameController.gameState.currentQuestionIndex >= GAME_CONFIG.QUESTIONS_PER_SESSION) {
+    const totalQuestions = gameController.gameState.totalQuestions || GAME_CONFIG.QUESTIONS_PER_SESSION;
+    if (gameController.gameState.currentQuestionIndex >= totalQuestions) {
         gameComplete();
     } else {
         updateProgress();
@@ -593,8 +588,9 @@ function playSound(type) {
 }
 
 function gameComplete() {
-    // 最终更新进度显示为20/20
-    gameController.gameState.currentQuestionIndex = GAME_CONFIG.QUESTIONS_PER_SESSION;
+    // 最终更新进度显示
+    const totalQuestions = gameController.gameState.totalQuestions || GAME_CONFIG.QUESTIONS_PER_SESSION;
+    gameController.gameState.currentQuestionIndex = totalQuestions;
     updateProgress();
     
     elements.finalScore.textContent = gameController.gameState.score;
@@ -603,7 +599,7 @@ function gameComplete() {
     // 如果是当前错题测试且得分不错，清空当前错题
     if (gameController.gameState.isMistakeTest && 
         gameController.gameState.mistakeType === 'current' && 
-        gameController.gameState.score >= 15) {
+        gameController.gameState.score >= Math.ceil(totalQuestions * 0.75)) {
         gameController.clearCurrentMistakes();
         showFeedback('🎉 当前错题已清空！挑战成功！', false);
     }
@@ -616,11 +612,12 @@ function gameComplete() {
     const score = gameController.gameState.score;
     const message = document.querySelector('.modal-message');
     if (gameController.gameState.isMistakeTest) {
-        if (score >= 18) {
+        const accuracy = Math.round((score / totalQuestions) * 100);
+        if (accuracy === 100) {
             message.textContent = '完美！你已经掌握了这些错题！🎯';
-        } else if (score >= 15) {
+        } else if (accuracy >= 75) {
             message.textContent = '很棒！继续保持这个水平！⭐';
-        } else if (score >= 10) {
+        } else if (accuracy >= 50) {
             message.textContent = '不错！再试一次会更好！💪';
         } else {
             message.textContent = '继续努力！多练习就能进步！📚';
@@ -649,11 +646,15 @@ function gameOver() {
 }
 
 function startGame(mistakeType = null) {
+    const questions = mistakeType ? generateMistakeQuestions(mistakeType) : generateQuestions();
+    const totalQuestions = mistakeType ? questions.length : GAME_CONFIG.QUESTIONS_PER_SESSION;
+    
     gameController.gameState = {
         hearts: GAME_CONFIG.MAX_HEARTS,
         score: 0,
         currentQuestionIndex: 0,
-        questions: mistakeType ? generateMistakeQuestions(mistakeType) : generateQuestions(),
+        questions: questions,
+        totalQuestions: totalQuestions,
         isAnswering: false,
         wrongAnswers: [],
         isMistakeTest: !!mistakeType,
