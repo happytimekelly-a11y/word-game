@@ -3,56 +3,120 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>词力冲刺 - Word Sprint</title>
+    <title>词力冲刺 - Word Sprint v1.1</title>
     <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
 </head>
 <body>
-    <div class="game-container">
-        <!-- 顶部状态栏 -->
-        <header class="game-header">
-            <div class="hearts-container">
-                <span class="hearts-label">生命值:</span>
-                <div class="hearts" id="hearts">
-                    <span class="heart">❤️</span>
-                    <span class="heart">❤️</span>
-                    <span class="heart">❤️</span>
-                    <span class="heart">❤️</span>
-                    <span class="heart">❤️</span>
+    <!-- 主屏幕 -->
+    <div id="main-screen" class="screen active">
+        <div class="main-container">
+            <header class="main-header">
+                <h1 class="app-title">词力冲刺</h1>
+                <div class="mascot">🧠</div>
+            </header>
+            
+            <main class="main-content">
+                <div class="stats-container">
+                    <div class="stat-item">
+                        <div class="stat-label">已掌握单词</div>
+                        <div class="stat-value" id="mastered-count">150 / 3500</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">今日连击</div>
+                        <div class="stat-value" id="streak-count">🔥 3</div>
+                    </div>
                 </div>
-            </div>
-            <div class="progress-container">
-                <div class="progress-bar" id="progress-bar">
-                    <div class="progress-fill" id="progress-fill"></div>
-                </div>
-                <span class="progress-text" id="progress-text">0/20</span>
-            </div>
-        </header>
-
-        <!-- 题目区域 -->
-        <main class="game-main">
-            <div class="question-card" id="question-card">
-                <div class="question-word" id="question-word">loading...</div>
-                <div class="question-phonetic" id="question-phonetic"></div>
-                <div class="question-text" id="question-text">What does this word mean?</div>
                 
-                <div class="options-container" id="options-container">
-                    <!-- 选项将通过JavaScript动态生成 -->
+                <div class="action-buttons">
+                    <button class="primary-btn" id="start-sprint-btn">开始冲刺</button>
+                    <button class="secondary-btn" id="mistake-book-btn">
+                        📕 我的错题本 (<span id="mistake-count">5</span>)
+                    </button>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- 游戏屏幕 -->
+    <div id="game-screen" class="screen">
+        <div class="game-container">
+            <!-- 顶部状态栏 -->
+            <header class="game-header">
+                <div class="hearts-container">
+                    <span class="hearts-label">生命值:</span>
+                    <div class="hearts" id="hearts">
+                        <span class="heart">❤️</span>
+                        <span class="heart">❤️</span>
+                        <span class="heart">❤️</span>
+                        <span class="heart">❤️</span>
+                        <span class="heart">❤️</span>
+                    </div>
+                </div>
+                <div class="progress-container">
+                    <div class="progress-bar" id="progress-bar">
+                        <div class="progress-fill" id="progress-fill"></div>
+                    </div>
+                    <span class="progress-text" id="progress-text">0/20</span>
+                </div>
+                <button class="back-btn" id="back-to-main-btn">← 返回</button>
+            </header>
+
+            <!-- 题目区域 -->
+            <main class="game-main">
+                <div class="question-card" id="question-card">
+                    <div class="question-word" id="question-word">loading...</div>
+                    <div class="question-phonetic" id="question-phonetic"></div>
+                    <div class="question-text" id="question-text">What does this word mean?</div>
+                    
+                    <div class="options-container" id="options-container">
+                        <!-- 选项将通过JavaScript动态生成 -->
+                    </div>
+                </div>
+            </main>
+
+            <!-- 反馈提示 -->
+            <div class="feedback-toast" id="feedback-toast"></div>
+
+            <!-- 游戏结束对话框 -->
+            <div class="game-over-modal" id="game-over-modal" style="display: none;">
+                <div class="modal-content">
+                    <h2 class="modal-title">冲刺结束！</h2>
+                    <p class="modal-score">你答对了 <span id="final-score">0</span> 题</p>
+                    <p class="modal-message">加油，再试一次！</p>
+                    <div class="modal-buttons">
+                        <button class="restart-btn" onclick="restartGame()">再来一次</button>
+                        <button class="back-btn" onclick="backToMain()">返回主页</button>
+                    </div>
                 </div>
             </div>
-        </main>
+        </div>
+    </div>
 
-        <!-- 反馈提示 -->
-        <div class="feedback-toast" id="feedback-toast"></div>
-
-        <!-- 游戏结束对话框 -->
-        <div class="game-over-modal" id="game-over-modal" style="display: none;">
-            <div class="modal-content">
-                <h2 class="modal-title">冲刺结束！</h2>
-                <p class="modal-score">你答对了 <span id="final-score">0</span> 题</p>
-                <p class="modal-message">加油，再试一次！</p>
-                <button class="restart-btn" onclick="restartGame()">重新开始</button>
-            </div>
+    <!-- 错题本屏幕 -->
+    <div id="mistake-book-screen" class="screen">
+        <div class="mistake-book-container">
+            <header class="mistake-book-header">
+                <button class="back-btn" id="back-to-main-from-mistake-btn">← 返回</button>
+                <h2 class="mistake-book-title">📕 我的错题本</h2>
+                <div class="mistake-count">共 <span id="total-mistakes">0</span> 个错题</div>
+            </header>
+            
+            <main class="mistake-book-content">
+                <div class="mistake-intro">
+                    <p>💡 这里记录了你答错的单词。回到主界面开始新的冲刺时，系统会优先考这些单词哦！</p>
+                </div>
+                
+                <div class="mistake-list" id="mistake-list">
+                    <!-- 错题列表将通过JavaScript动态生成 -->
+                </div>
+                
+                <div class="empty-state" id="empty-mistakes" style="display: none;">
+                    <div class="empty-icon">🎉</div>
+                    <h3>太棒了！</h3>
+                    <p>你还没有任何错题，继续保持！</p>
+                </div>
+            </main>
         </div>
     </div>
     
