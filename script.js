@@ -413,16 +413,22 @@ function generateMistakeQuestions(mistakeType) {
         const mistake = mistakes[i];
         const word = WORD_DATABASE.find(w => w.id === mistake.wordId);
         if (word) {
+            // 获取错误选项，但要确保包含正确答案
             const wrongWords = getRandomWords(GAME_CONFIG.OPTIONS_PER_QUESTION - 1, [word.id]);
-            const allOptions = [word, ...wrongWords];
+            
+            // 创建选项数组，包含正确答案和错误选项
+            const allOptions = [
+                { definition: mistake.correctAnswer, id: word.id, isCorrect: true },
+                ...wrongWords.map(w => ({ definition: w.definition, id: w.id, isCorrect: false }))
+            ];
             const shuffledOptions = shuffleArray(allOptions);
             
             questions.push({
-                word: word.word,
-                phonetic: word.phonetic,
-                correctAnswer: word.definition,
+                word: mistake.word,
+                phonetic: mistake.phonetic,
+                correctAnswer: mistake.correctAnswer,
                 options: shuffledOptions.map(w => w.definition),
-                correctIndex: shuffledOptions.findIndex(w => w.id === word.id),
+                correctIndex: shuffledOptions.findIndex(w => w.isCorrect),
                 wordId: word.id
             });
         }
