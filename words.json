@@ -1,0 +1,37 @@
+[
+  {
+    "id": 1,
+    "word": "abandon",
+    "phonetic": "/əˈbændən/",
+    "definition": "v. 放弃，抛弃",
+    "example": "We had to abandon the car."
+  },
+  {
+    "id": 2,
+    "word": "ability",
+    "phonetic": "/əˈbɪləti/",
+    "definition": "n. 能力；才能",
+    "example": "She has the ability to manage a large team."
+  },
+  {
+    "id": 3,
+    "word": "able",
+    "phonetic": "/ˈeɪbl/",
+    "definition": "adj. 能够的；有能力的",
+    "example": "You must be able to speak French for this job."
+  },
+  {
+    "id": 4,
+    "word": "about",
+    "phonetic": "/əˈbaʊt/",
+    "definition": "prep. 关于；大约",
+    "example": "Tell me all about your holiday."
+  },
+  {
+    "id": 5,
+    "word": "above",
+    "phonetic": "/əˈbʌv/",
+    "definition": "prep. 在…上面",
+    "example": "The helicopter was hovering above the building."
+  }
+]
