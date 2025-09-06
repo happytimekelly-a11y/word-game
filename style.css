@@ -404,6 +404,13 @@ body {
     gap: 1rem;
     justify-content: center;
     flex-wrap: wrap;
+    margin-top: 1rem;
+}
+
+.modal-buttons .restart-btn,
+.modal-buttons .back-btn {
+    flex: 1;
+    max-width: 200px;
 }
 
 .restart-btn, .back-btn {
@@ -416,6 +423,18 @@ body {
     transition: all 0.3s ease;
     font-family: "Nunito", sans-serif;
     min-width: 120px;
+}
+
+/* Modal specific button styling */
+.modal-buttons .back-btn {
+    background: #6c757d;
+    color: white;
+}
+
+.modal-buttons .back-btn:hover {
+    background: #5a6268;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(108, 117, 125, 0.4);
 }
 
 .restart-btn {
