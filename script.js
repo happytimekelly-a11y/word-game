@@ -135,7 +135,6 @@ class GameState {
         this.masteredWords = this.loadMasteredWords();
         this.dailyStreak = this.loadDailyStreak();
         this.usedWordIds = new Set();
-        this.currentMistakeMode = 'current'; // 'current' 或 'historical'
     }
 
     // 本地存储管理
@@ -292,10 +291,10 @@ const elements = {
     mistakeList: document.getElementById('mistake-list'),
     totalMistakes: document.getElementById('total-mistakes'),
     emptyMistakes: document.getElementById('empty-mistakes'),
-    currentMistakesTab: document.getElementById('current-mistakes-tab'),
-    historicalMistakesTab: document.getElementById('historical-mistakes-tab'),
     testCurrentMistakesBtn: document.getElementById('test-current-mistakes-btn'),
-    testHistoricalMistakesBtn: document.getElementById('test-historical-mistakes-btn')
+    testHistoricalMistakesBtn: document.getElementById('test-historical-mistakes-btn'),
+    currentMistakesCount: document.getElementById('current-mistakes-count'),
+    historicalMistakesCount: document.getElementById('historical-mistakes-count')
 };
 
 // 工具函数
@@ -679,22 +678,16 @@ function backToMain() {
 
 // 错题本功能
 function displayMistakeBook() {
-    updateMistakeBookDisplay();
-    updateMistakeButtons();
-}
-
-// 更新错题本显示
-function updateMistakeBookDisplay() {
-    let mistakes = [];
-    if (gameController.currentMistakeMode === 'current') {
-        mistakes = gameController.getCurrentMistakes();
-    } else {
-        mistakes = gameController.getHistoricalMistakes();
-    }
+    const currentMistakes = gameController.getCurrentMistakes();
+    const historicalMistakes = gameController.getHistoricalMistakes();
     
-    elements.totalMistakes.textContent = mistakes.length;
+    elements.totalMistakes.textContent = currentMistakes.length;
+    elements.currentMistakesCount.textContent = currentMistakes.length;
+    elements.historicalMistakesCount.textContent = historicalMistakes.length;
+    elements.testCurrentMistakesBtn.disabled = currentMistakes.length === 0;
+    elements.testHistoricalMistakesBtn.disabled = historicalMistakes.length === 0;
     
-    if (mistakes.length === 0) {
+    if (currentMistakes.length === 0) {
         elements.mistakeList.style.display = 'none';
         elements.emptyMistakes.style.display = 'block';
     } else {
@@ -702,24 +695,11 @@ function updateMistakeBookDisplay() {
         elements.emptyMistakes.style.display = 'none';
         
         elements.mistakeList.innerHTML = '';
-        mistakes.forEach(mistake => {
+        currentMistakes.forEach(mistake => {
             const mistakeElement = createMistakeElement(mistake);
             elements.mistakeList.appendChild(mistakeElement);
         });
     }
-}
-
-// 更新错题本按钮状态
-function updateMistakeButtons() {
-    const currentMistakes = gameController.getCurrentMistakes();
-    const historicalMistakes = gameController.getHistoricalMistakes();
-    
-    elements.testCurrentMistakesBtn.disabled = currentMistakes.length === 0;
-    elements.testHistoricalMistakesBtn.disabled = historicalMistakes.length === 0;
-    
-    // 更新标签页状态
-    elements.currentMistakesTab.classList.toggle('active', gameController.currentMistakeMode === 'current');
-    elements.historicalMistakesTab.classList.toggle('active', gameController.currentMistakeMode === 'historical');
 }
 
 function createMistakeElement(mistake) {
@@ -766,19 +746,6 @@ function initEventListeners() {
     // 返回按钮
     elements.backToMainBtn.addEventListener('click', backToMain);
     elements.backToMainFromMistakeBtn.addEventListener('click', () => switchScreen('main'));
-    
-    // 错题本标签页
-    elements.currentMistakesTab.addEventListener('click', () => {
-        gameController.currentMistakeMode = 'current';
-        updateMistakeBookDisplay();
-        updateMistakeButtons();
-    });
-    
-    elements.historicalMistakesTab.addEventListener('click', () => {
-        gameController.currentMistakeMode = 'historical';
-        updateMistakeBookDisplay();
-        updateMistakeButtons();
-    });
     
     // 错题本测试按钮
     elements.testCurrentMistakesBtn.addEventListener('click', () => {

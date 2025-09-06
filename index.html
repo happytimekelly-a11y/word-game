@@ -103,18 +103,13 @@
             </header>
             
             <main class="mistake-book-content">
-                <div class="mistake-tabs">
-                    <button class="tab-btn active" id="current-mistakes-tab">当前错题</button>
-                    <button class="tab-btn" id="historical-mistakes-tab">历史错题</button>
-                </div>
-                
                 <div class="mistake-actions">
                     <button class="test-btn" id="test-current-mistakes-btn">挑战当前错题</button>
                     <button class="test-btn" id="test-historical-mistakes-btn">挑战历史错题</button>
                 </div>
                 
                 <div class="mistake-intro">
-                    <p>💡 这里记录了你答错的单词。选择错题类型进行针对性练习！</p>
+                    <p>💡 当前错题：<span id="current-mistakes-count">0</span> 个 | 历史错题：<span id="historical-mistakes-count">0</span> 个</p>
                 </div>
                 
                 <div class="mistake-list" id="mistake-list">
