@@ -518,11 +518,29 @@ function gameComplete() {
     // 更新连击
     gameController.dailyStreak++;
     gameController.saveDailyStreak(gameController.dailyStreak);
+    
+    // 更新鼓励信息
+    const score = gameController.gameState.score;
+    const message = document.querySelector('.modal-message');
+    if (score >= 18) {
+        message.textContent = '太棒了！你是词汇大师！🏆';
+    } else if (score >= 15) {
+        message.textContent = '很好！继续努力！🌟';
+    } else if (score >= 10) {
+        message.textContent = '不错！再试一次会更好！💪';
+    } else {
+        message.textContent = '加油！多练习就能进步！📚';
+    }
 }
 
 function gameOver() {
     elements.finalScore.textContent = gameController.gameState.score;
     elements.gameOverModal.style.display = 'flex';
+    
+    // 更新鼓励信息 - 心耗尽的情况
+    const message = document.querySelector('.modal-message');
+    const score = gameController.gameState.score;
+    message.textContent = `生命值耗尽！你答对了 ${score} 题，再试一次吧！❤️‍🩹`;
 }
 
 function startGame() {

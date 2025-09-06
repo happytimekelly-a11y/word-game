@@ -403,6 +403,7 @@ body {
     display: flex;
     gap: 1rem;
     justify-content: center;
+    flex-wrap: wrap;
 }
 
 .restart-btn, .back-btn {
@@ -414,6 +415,7 @@ body {
     cursor: pointer;
     transition: all 0.3s ease;
     font-family: "Nunito", sans-serif;
+    min-width: 120px;
 }
 
 .restart-btn {
