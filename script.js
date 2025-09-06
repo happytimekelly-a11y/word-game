@@ -512,6 +512,10 @@ function playSound(type) {
 }
 
 function gameComplete() {
+    // 最终更新进度显示为20/20
+    gameController.gameState.currentQuestionIndex = GAME_CONFIG.QUESTIONS_PER_SESSION;
+    updateProgress();
+    
     elements.finalScore.textContent = gameController.gameState.score;
     elements.gameOverModal.style.display = 'flex';
     
