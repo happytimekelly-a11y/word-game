@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>词力冲刺 - Word Sprint v1.1</title>
+    <title>英语小霸王 - Word Sprint v1.2</title>
     <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
 </head>
@@ -12,7 +12,7 @@
     <div id="main-screen" class="screen active">
         <div class="main-container">
             <header class="main-header">
-                <h1 class="app-title">词力冲刺</h1>
+                <h1 class="app-title">英语小霸王</h1>
                 <div class="mascot">🧠</div>
             </header>
             
@@ -103,8 +103,18 @@
             </header>
             
             <main class="mistake-book-content">
+                <div class="mistake-tabs">
+                    <button class="tab-btn active" id="current-mistakes-tab">当前错题</button>
+                    <button class="tab-btn" id="historical-mistakes-tab">历史错题</button>
+                </div>
+                
+                <div class="mistake-actions">
+                    <button class="test-btn" id="test-current-mistakes-btn">挑战当前错题</button>
+                    <button class="test-btn" id="test-historical-mistakes-btn">挑战历史错题</button>
+                </div>
+                
                 <div class="mistake-intro">
-                    <p>💡 这里记录了你答错的单词。回到主界面开始新的冲刺时，系统会优先考这些单词哦！</p>
+                    <p>💡 这里记录了你答错的单词。选择错题类型进行针对性练习！</p>
                 </div>
                 
                 <div class="mistake-list" id="mistake-list">

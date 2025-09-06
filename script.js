@@ -131,9 +131,11 @@ class GameState {
             wrongAnswers: []
         };
         this.mistakeBook = this.loadMistakeBook();
+        this.historicalMistakes = this.loadHistoricalMistakes();
         this.masteredWords = this.loadMasteredWords();
         this.dailyStreak = this.loadDailyStreak();
         this.usedWordIds = new Set();
+        this.currentMistakeMode = 'current'; // 'current' 或 'historical'
     }
 
     // 本地存储管理
@@ -144,6 +146,15 @@ class GameState {
 
     saveMistakeBook() {
         localStorage.setItem('mistakeBook', JSON.stringify(this.mistakeBook));
+    }
+
+    loadHistoricalMistakes() {
+        const stored = localStorage.getItem('historicalMistakes');
+        return stored ? JSON.parse(stored) : [];
+    }
+
+    saveHistoricalMistakes() {
+        localStorage.setItem('historicalMistakes', JSON.stringify(this.historicalMistakes));
     }
 
     loadMasteredWords() {
@@ -183,7 +194,7 @@ class GameState {
         const existingMistake = this.mistakeBook.find(m => m.wordId === word.id);
         
         if (!existingMistake) {
-            this.mistakeBook.push({
+            const mistake = {
                 wordId: word.id,
                 word: word.word,
                 phonetic: word.phonetic,
@@ -193,8 +204,17 @@ class GameState {
                 correctAnswer: correctAnswer,
                 dateAdded: new Date().toISOString(),
                 status: 'pending' // pending 或 conquered
-            });
+            };
+            
+            this.mistakeBook.push(mistake);
             this.saveMistakeBook();
+            
+            // 同时添加到历史错题（如果不存在）
+            const existingHistorical = this.historicalMistakes.find(m => m.wordId === word.id);
+            if (!existingHistorical) {
+                this.historicalMistakes.push({...mistake});
+                this.saveHistoricalMistakes();
+            }
         }
     }
 
@@ -208,9 +228,25 @@ class GameState {
         }
     }
 
-    // 获取待复习的错题
-    getPendingMistakes() {
+    // 清空当前错题（挑战成功时调用）
+    clearCurrentMistakes() {
+        this.mistakeBook = [];
+        this.saveMistakeBook();
+    }
+
+    // 获取当前错题
+    getCurrentMistakes() {
         return this.mistakeBook.filter(m => m.status === 'pending');
+    }
+
+    // 获取历史错题
+    getHistoricalMistakes() {
+        return this.historicalMistakes.filter(m => m.status === 'pending');
+    }
+
+    // 获取待复习的错题（保持向后兼容）
+    getPendingMistakes() {
+        return this.getCurrentMistakes();
     }
 
     // 获取已掌握的单词数量
@@ -222,7 +258,7 @@ class GameState {
     updateStats() {
         document.getElementById('mastered-count').textContent = `${this.getMasteredCount()} / 3500`;
         document.getElementById('streak-count').textContent = `🔥 ${this.dailyStreak}`;
-        document.getElementById('mistake-count').textContent = this.getPendingMistakes().length;
+        document.getElementById('mistake-count').textContent = this.getCurrentMistakes().length;
     }
 }
 
@@ -255,7 +291,11 @@ const elements = {
     // 错题本元素
     mistakeList: document.getElementById('mistake-list'),
     totalMistakes: document.getElementById('total-mistakes'),
-    emptyMistakes: document.getElementById('empty-mistakes')
+    emptyMistakes: document.getElementById('empty-mistakes'),
+    currentMistakesTab: document.getElementById('current-mistakes-tab'),
+    historicalMistakesTab: document.getElementById('historical-mistakes-tab'),
+    testCurrentMistakesBtn: document.getElementById('test-current-mistakes-btn'),
+    testHistoricalMistakesBtn: document.getElementById('test-historical-mistakes-btn')
 };
 
 // 工具函数
@@ -351,6 +391,48 @@ function generateQuestions() {
     gameController.usedWordIds.clear();
     
     for (let i = 0; i < GAME_CONFIG.QUESTIONS_PER_SESSION; i++) {
+        questions.push(generateQuestion());
+    }
+    
+    return questions;
+}
+
+// 生成错题测试题目
+function generateMistakeQuestions(mistakeType) {
+    const questions = [];
+    gameController.usedWordIds.clear();
+    
+    let mistakes = [];
+    if (mistakeType === 'current') {
+        mistakes = gameController.getCurrentMistakes();
+    } else if (mistakeType === 'historical') {
+        mistakes = gameController.getHistoricalMistakes();
+    }
+    
+    // 如果错题不足，用普通题目补充
+    const mistakeCount = Math.min(mistakes.length, GAME_CONFIG.QUESTIONS_PER_SESSION);
+    
+    for (let i = 0; i < mistakeCount; i++) {
+        const mistake = mistakes[i];
+        const word = WORD_DATABASE.find(w => w.id === mistake.wordId);
+        if (word) {
+            const wrongWords = getRandomWords(GAME_CONFIG.OPTIONS_PER_QUESTION - 1, [word.id]);
+            const allOptions = [word, ...wrongWords];
+            const shuffledOptions = shuffleArray(allOptions);
+            
+            questions.push({
+                word: word.word,
+                phonetic: word.phonetic,
+                correctAnswer: word.definition,
+                options: shuffledOptions.map(word => word.definition),
+                correctIndex: shuffledOptions.findIndex(word => word.id === word.id),
+                wordId: word.id
+            });
+        }
+    }
+    
+    // 如果错题不足，用普通题目补充
+    for (let i = questions.length; i < GAME_CONFIG.QUESTIONS_PER_SESSION; i++) {
         questions.push(generateQuestion());
     }
     
@@ -519,6 +601,14 @@ function gameComplete() {
     elements.finalScore.textContent = gameController.gameState.score;
     elements.gameOverModal.style.display = 'flex';
     
+    // 如果是当前错题测试且得分不错，清空当前错题
+    if (gameController.gameState.isMistakeTest && 
+        gameController.gameState.mistakeType === 'current' && 
+        gameController.gameState.score >= 15) {
+        gameController.clearCurrentMistakes();
+        showFeedback('🎉 当前错题已清空！挑战成功！', false);
+    }
+    
     // 更新连击
     gameController.dailyStreak++;
     gameController.saveDailyStreak(gameController.dailyStreak);
@@ -526,14 +616,26 @@ function gameComplete() {
     // 更新鼓励信息
     const score = gameController.gameState.score;
     const message = document.querySelector('.modal-message');
-    if (score >= 18) {
-        message.textContent = '太棒了！你是词汇大师！🏆';
-    } else if (score >= 15) {
-        message.textContent = '很好！继续努力！🌟';
-    } else if (score >= 10) {
-        message.textContent = '不错！再试一次会更好！💪';
+    if (gameController.gameState.isMistakeTest) {
+        if (score >= 18) {
+            message.textContent = '完美！你已经掌握了这些错题！🎯';
+        } else if (score >= 15) {
+            message.textContent = '很棒！继续保持这个水平！⭐';
+        } else if (score >= 10) {
+            message.textContent = '不错！再试一次会更好！💪';
+        } else {
+            message.textContent = '继续努力！多练习就能进步！📚';
+        }
     } else {
-        message.textContent = '加油！多练习就能进步！📚';
+        if (score >= 18) {
+            message.textContent = '太棒了！你是词汇大师！🏆';
+        } else if (score >= 15) {
+            message.textContent = '很好！继续努力！🌟';
+        } else if (score >= 10) {
+            message.textContent = '不错！再试一次会更好！💪';
+        } else {
+            message.textContent = '加油！多练习就能进步！📚';
+        }
     }
 }
 
@@ -547,14 +649,16 @@ function gameOver() {
     message.textContent = `生命值耗尽！你答对了 ${score} 题，再试一次吧！❤️‍🩹`;
 }
 
-function startGame() {
+function startGame(mistakeType = null) {
     gameController.gameState = {
         hearts: GAME_CONFIG.MAX_HEARTS,
         score: 0,
         currentQuestionIndex: 0,
-        questions: generateQuestions(),
+        questions: mistakeType ? generateMistakeQuestions(mistakeType) : generateQuestions(),
         isAnswering: false,
-        wrongAnswers: []
+        wrongAnswers: [],
+        isMistakeTest: !!mistakeType,
+        mistakeType: mistakeType
     };
     
     elements.gameOverModal.style.display = 'none';
@@ -565,7 +669,8 @@ function startGame() {
 }
 
 function restartGame() {
-    startGame();
+    const mistakeType = gameController.gameState.mistakeType;
+    startGame(mistakeType);
 }
 
 function backToMain() {
@@ -574,11 +679,22 @@ function backToMain() {
 
 // 错题本功能
 function displayMistakeBook() {
-    const pendingMistakes = gameController.getPendingMistakes();
+    updateMistakeBookDisplay();
+    updateMistakeButtons();
+}
+
+// 更新错题本显示
+function updateMistakeBookDisplay() {
+    let mistakes = [];
+    if (gameController.currentMistakeMode === 'current') {
+        mistakes = gameController.getCurrentMistakes();
+    } else {
+        mistakes = gameController.getHistoricalMistakes();
+    }
     
-    elements.totalMistakes.textContent = pendingMistakes.length;
+    elements.totalMistakes.textContent = mistakes.length;
     
-    if (pendingMistakes.length === 0) {
+    if (mistakes.length === 0) {
         elements.mistakeList.style.display = 'none';
         elements.emptyMistakes.style.display = 'block';
     } else {
@@ -586,11 +702,24 @@ function displayMistakeBook() {
         elements.emptyMistakes.style.display = 'none';
         
         elements.mistakeList.innerHTML = '';
-        pendingMistakes.forEach(mistake => {
+        mistakes.forEach(mistake => {
             const mistakeElement = createMistakeElement(mistake);
             elements.mistakeList.appendChild(mistakeElement);
         });
     }
+}
+
+// 更新错题本按钮状态
+function updateMistakeButtons() {
+    const currentMistakes = gameController.getCurrentMistakes();
+    const historicalMistakes = gameController.getHistoricalMistakes();
+    
+    elements.testCurrentMistakesBtn.disabled = currentMistakes.length === 0;
+    elements.testHistoricalMistakesBtn.disabled = historicalMistakes.length === 0;
+    
+    // 更新标签页状态
+    elements.currentMistakesTab.classList.toggle('active', gameController.currentMistakeMode === 'current');
+    elements.historicalMistakesTab.classList.toggle('active', gameController.currentMistakeMode === 'historical');
 }
 
 function createMistakeElement(mistake) {
@@ -637,6 +766,30 @@ function initEventListeners() {
     // 返回按钮
     elements.backToMainBtn.addEventListener('click', backToMain);
     elements.backToMainFromMistakeBtn.addEventListener('click', () => switchScreen('main'));
+    
+    // 错题本标签页
+    elements.currentMistakesTab.addEventListener('click', () => {
+        gameController.currentMistakeMode = 'current';
+        updateMistakeBookDisplay();
+        updateMistakeButtons();
+    });
+    
+    elements.historicalMistakesTab.addEventListener('click', () => {
+        gameController.currentMistakeMode = 'historical';
+        updateMistakeBookDisplay();
+        updateMistakeButtons();
+    });
+    
+    // 错题本测试按钮
+    elements.testCurrentMistakesBtn.addEventListener('click', () => {
+        switchScreen('game');
+        startGame('current');
+    });
+    
+    elements.testHistoricalMistakesBtn.addEventListener('click', () => {
+        switchScreen('game');
+        startGame('historical');
+    });
     
     // 键盘事件
     document.addEventListener('keydown', handleKeyPress);
